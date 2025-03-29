@@ -1,77 +1,77 @@
 import { useState, useEffect } from "react";
 import { getContract } from "./blockchain";
+import "./App.css"; // Import custom CSS
 
 function App() {
-  const [tasks, setTasks] = useState([]);
-  const [newTask, setNewTask] = useState("");
+    const [tasks, setTasks] = useState([]);
+    const [newTask, setNewTask] = useState("");
+    const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchTasks();
-  }, []);
-
-  // Fetch tasks from the contract
-  const fetchTasks = async () => {
-    const contract = await getContract();
-    if (contract) {
-      try {
-        const taskList = await contract.getTasks();
-        setTasks(taskList);
-      } catch (error) {
-        console.error("Error fetching tasks:", error);
-      }
-    }
-  };
-
-  // Add a new task
-  const addTask = async () => {
-    if (!newTask.trim()) return;
-    const contract = await getContract();
-    if (contract) {
-      try {
-        const tx = await contract.addTask(newTask);
-        await tx.wait();
-        setNewTask("");
+    useEffect(() => {
+        const fetchTasks = async () => {
+            const contract = await getContract();
+            if (contract) {
+                const taskList = await contract.getTasks();
+                setTasks(taskList);
+            }
+        };
         fetchTasks();
-      } catch (error) {
-        console.error("Error adding task:", error);
-      }
-    }
-  };
+    }, []);
 
-  // Remove a task
-  const removeTask = async (index) => {
-    const contract = await getContract();
-    if (contract) {
-      try {
-        const tx = await contract.removeTask(index);
-        await tx.wait();
-        fetchTasks();
-      } catch (error) {
-        console.error("Error removing task:", error);
-      }
-    }
-  };
+    const addTask = async () => {
+        if (!newTask.trim()) return;
+        setLoading(true);
+        try {
+            const contract = await getContract();
+            await contract.addTask(newTask);
+            setTasks([...tasks, newTask]);
+            setNewTask("");
+        } catch (error) {
+            console.error("Error adding task:", error);
+        }
+        setLoading(false);
+    };
 
-  return (
-    <div style={{ padding: "20px", textAlign: "center" }}>
-      <h1>Todo List DApp</h1>
-      <input
-        type="text"
-        placeholder="Enter a new task"
-        value={newTask}
-        onChange={(e) => setNewTask(e.target.value)}
-      />
-      <button onClick={addTask}>Add Task</button>
+    const removeTask = async (index) => {
+        setLoading(true);
+        try {
+            const contract = await getContract();
+            await contract.removeTask(index);
+            setTasks(tasks.filter((_, i) => i !== index));
+        } catch (error) {
+            console.error("Error removing task:", error);
+        }
+        setLoading(false);
+    };
 
-      <ul>
-        {tasks.map((task, index) => (
-          <li key={index}>
-            {task} <button onClick={() => removeTask(index)}>Remove</button>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
+    return (
+        <div className="app-container">
+            <header>
+                <h1>Todo List App</h1>
+            </header>
+
+            <div className="task-input">
+                <input
+                    type="text"
+                    placeholder="Enter new task..."
+                    value={newTask}
+                    onChange={(e) => setNewTask(e.target.value)}
+                />
+                <button onClick={addTask} disabled={loading}>
+                    {loading ? "Adding..." : "Add Task"}
+                </button>
+            </div>
+
+            <ul className="task-list">
+                {tasks.map((task, index) => (
+                    <li key={index}>
+                        <span>{task}</span>
+                        <button onClick={() => removeTask(index)}>&times;</button>
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
 }
 
 export default App;
