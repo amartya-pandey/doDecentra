@@ -2,7 +2,14 @@ import { useState, useEffect } from "react";
 import { getContract } from "./blockchain";
 import "./App.css"; // Import custom CSS
 
+
+
+
 function App() {
+    useEffect(() => {
+        document.title = "doDecentra"; // Change title dynamically
+    }, []);
+
     const [tasks, setTasks] = useState([]);
     const [newTask, setNewTask] = useState("");
     const [loading, setLoading] = useState(false);
@@ -47,7 +54,7 @@ function App() {
     return (
         <div className="app-container">
             <header>
-                <h1>Todo List App</h1>
+                <h1>Task</h1>
             </header>
 
             <div className="task-input">
